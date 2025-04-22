@@ -8,15 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { getAllEntries } from "@/utils/storage";
 import { MoodEntry, MOODS, MoodType } from "@/types/mood";
+import LocationSelect from "@/components/LocationSelect";
 
 const Home = () => {
   const navigate = useNavigate();
-  const { weather, loading, error } = useWeather();
+  const [selectedLocation, setSelectedLocation] = useState("current");
+  const { weather, loading, error } = useWeather({ city: selectedLocation });
   const [recentEntries, setRecentEntries] = useState<MoodEntry[]>([]);
 
   useEffect(() => {
     const entries = getAllEntries();
-    // Sort by date descending and take the 5 most recent
     const recent = [...entries]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5);
@@ -37,7 +38,13 @@ const Home = () => {
       {/* Weather Card */}
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Today's Weather</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Today's Weather</span>
+            <LocationSelect 
+              value={selectedLocation} 
+              onValueChange={setSelectedLocation} 
+            />
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center">
           {loading ? (

@@ -2,12 +2,7 @@
 import { useState, useEffect } from 'react';
 import { WeatherData, getWeatherByCurrentLocation, getWeatherByCity } from '@/utils/weatherService';
 
-interface UseWeatherProps {
-  city?: string;
-  useCurrentLocation?: boolean;
-}
-
-export function useWeather({ city, useCurrentLocation = true }: UseWeatherProps = {}) {
+export function useWeather({ city = "current" }: { city?: string } = {}) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,12 +15,10 @@ export function useWeather({ city, useCurrentLocation = true }: UseWeatherProps 
       try {
         let weatherData: WeatherData;
         
-        if (city) {
-          weatherData = await getWeatherByCity(city);
-        } else if (useCurrentLocation) {
+        if (city === "current") {
           weatherData = await getWeatherByCurrentLocation();
         } else {
-          throw new Error('Either city or useCurrentLocation must be provided');
+          weatherData = await getWeatherByCity(city);
         }
         
         setWeather(weatherData);
@@ -37,7 +30,7 @@ export function useWeather({ city, useCurrentLocation = true }: UseWeatherProps 
     }
 
     fetchWeather();
-  }, [city, useCurrentLocation]);
+  }, [city]);
 
   return { weather, loading, error };
 }
