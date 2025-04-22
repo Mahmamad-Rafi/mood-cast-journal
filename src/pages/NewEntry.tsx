@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -10,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { saveEntry } from "@/utils/storage";
-import { MoodType, MOODS, getMoodBackgroundClass } from "@/types/mood";
+import { MOODS, getMoodBackgroundClass } from "@/types/mood";
 
 const NewEntry = () => {
   const navigate = useNavigate();
