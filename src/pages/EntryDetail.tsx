@@ -48,10 +48,16 @@ const EntryDetail = () => {
   
   const { mood, date, note, weather } = entry;
   const parsedDate = parseISO(date);
-  const moodInfo = MOODS[mood as MoodType];
+  // Add null check here to prevent accessing properties on undefined
+  const moodInfo = mood && MOODS[mood as MoodType] ? MOODS[mood as MoodType] : null;
+  
+  // If moodInfo is null, provide fallback values
+  const moodEmoji = moodInfo?.emoji || "😐";
+  const moodLabel = moodInfo?.label || "Unknown";
+  const moodBgClass = getMoodBackgroundClass(mood as MoodType);
   
   return (
-    <div className={`min-h-screen py-8 px-4 transition-colors duration-300 ${getMoodBackgroundClass(mood)}`}>
+    <div className={`min-h-screen py-8 px-4 transition-colors duration-300 ${moodBgClass}`}>
       <div className="max-w-2xl mx-auto">
         <Button 
           variant="ghost" 
@@ -93,8 +99,8 @@ const EntryDetail = () => {
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <span className="text-4xl mr-4">{moodInfo.emoji}</span>
-                <span className="text-xl font-medium">{moodInfo.label}</span>
+                <span className="text-4xl mr-4">{moodEmoji}</span>
+                <span className="text-xl font-medium">{moodLabel}</span>
               </div>
               
               <Dialog>
