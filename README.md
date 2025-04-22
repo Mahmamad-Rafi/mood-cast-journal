@@ -2,6 +2,9 @@ photos :-
 ![image](https://github.com/user-attachments/assets/0345947d-d75a-43ca-a5b1-eb4d920faf9c)
 ![image](https://github.com/user-attachments/assets/a67483e9-4c38-495c-82fd-362893ad8ed7)
 ![image](https://github.com/user-attachments/assets/1be701ed-6618-49bd-ab64-6d01271be9fd)
+![image](https://github.com/user-attachments/assets/e2af5021-8436-4b36-bb42-6003ce8ff247)
+![image](https://github.com/user-attachments/assets/b7500462-54a9-4d66-a5e6-8b0dd1b9054f)
+
 
 
 Follow these steps:
