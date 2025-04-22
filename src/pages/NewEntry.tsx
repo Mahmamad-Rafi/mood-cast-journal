@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -10,16 +11,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Textarea } from "@/components/ui/textarea";
 import { saveEntry } from "@/utils/storage";
 import { MoodType, MOODS, getMoodBackgroundClass } from "@/types/mood";
+import LocationSelect from "@/components/LocationSelect";
 
 const NewEntry = () => {
   const navigate = useNavigate();
-  const { weather, loading, error } = useWeather();
+  const [selectedLocation, setSelectedLocation] = useState<string>("current");
+  const { weather, loading, error } = useWeather({ city: selectedLocation });
   const [selectedMood, setSelectedMood] = useState<MoodType | null>(null);
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleMoodSelect = (mood: MoodType) => {
     setSelectedMood(mood);
+  };
+
+  const handleLocationChange = (value: string) => {
+    setSelectedLocation(value);
   };
 
   const handleSubmit = () => {
@@ -87,6 +94,14 @@ const NewEntry = () => {
           </CardHeader>
 
           <CardContent>
+            {/* Location selector */}
+            <div className="mb-4 flex justify-center">
+              <LocationSelect 
+                value={selectedLocation}
+                onValueChange={handleLocationChange}
+              />
+            </div>
+
             {/* Weather display */}
             {loading ? (
               <div className="text-center mb-6">Loading weather data...</div>

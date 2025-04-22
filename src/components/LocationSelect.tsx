@@ -4,6 +4,11 @@ import { MapPin } from "lucide-react";
 
 const CITIES = [
   { value: "current", label: "Current Location" },
+  { value: "hyderabad", label: "Hyderabad" },
+  { value: "chennai", label: "Chennai" },
+  { value: "kolkata", label: "Kolkata" },
+  { value: "bengaluru", label: "Bengaluru" },
+  { value: "delhi", label: "Delhi" },
   { value: "london", label: "London" },
   { value: "new york", label: "New York" },
   { value: "tokyo", label: "Tokyo" },
