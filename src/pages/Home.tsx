@@ -81,6 +81,14 @@ const Home = () => {
         >
           View All Entries
         </Button>
+        <Button 
+          onClick={() => navigate("/statistics")} 
+          className="flex-1 text-lg py-6"
+          variant="secondary"
+          size="lg"
+        >
+          View Statistics
+        </Button>
       </div>
 
       {/* Recent Entries */}

@@ -74,7 +74,10 @@ const Entries = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Journal Entries</h1>
-        <Button onClick={() => navigate("/new-entry")}>Add New Entry</Button>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate("/statistics")}>View Statistics</Button>
+          <Button onClick={() => navigate("/new-entry")}>Add New Entry</Button>
+        </div>
       </div>
       
       <Card className="mb-8">
