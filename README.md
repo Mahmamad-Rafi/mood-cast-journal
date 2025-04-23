@@ -7,6 +7,9 @@ photos :-
 
 
 
+TO acesss remotely :- 
+using the link :- https://rafimoddalweather.netlify.app/
+
 Follow these steps:
 
 ```sh
