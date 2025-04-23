@@ -6,6 +6,7 @@
 // API key for OpenWeatherMap
 const API_KEY = "02e2cec63096e9aac69ce909ca8fe7a7";
 const BASE_URL = "https://api.openweathermap.org/data/2.5";
+const GEO_URL = "https://api.openweathermap.org/geo/1.0";
 
 export interface WeatherData {
   main: {
@@ -28,6 +29,15 @@ export interface WeatherData {
     country: string;
   };
   dt: number;
+}
+
+export interface GeocodingResult {
+  name: string;
+  local_names?: Record<string, string>;
+  lat: number;
+  lon: number;
+  country: string;
+  state?: string;
 }
 
 /**
@@ -75,7 +85,31 @@ export const getWeatherByCoords = async (
 };
 
 /**
+ * Reverse geocoding to get precise location name from coordinates
+ */
+export const getReverseGeocoding = async (
+  lat: number, 
+  lon: number
+): Promise<GeocodingResult[]> => {
+  try {
+    const response = await fetch(
+      `${GEO_URL}/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Geocoding API error: ${response.statusText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to reverse geocode location:", error);
+    throw error;
+  }
+};
+
+/**
  * Get user's current location using browser geolocation API
+ * with maximum accuracy settings
  */
 export const getCurrentLocation = (): Promise<GeolocationPosition> => {
   return new Promise((resolve, reject) => {
@@ -100,9 +134,9 @@ export const getCurrentLocation = (): Promise<GeolocationPosition> => {
         }
       },
       { 
-        timeout: 15000,  // Increased timeout for better accuracy
+        timeout: 30000,       // Extended timeout for better accuracy
         enableHighAccuracy: true,  // Request high accuracy
-        maximumAge: 0  // Don't use cached position data
+        maximumAge: 0         // Don't use cached position data
       }
     );
   });
@@ -116,23 +150,55 @@ export const getWeatherIconUrl = (iconCode: string): string => {
 };
 
 /**
- * Convenience function to get weather by current location
+ * Enhanced function to get weather by current location with precise location name
  */
 export const getWeatherByCurrentLocation = async (): Promise<WeatherData> => {
   try {
+    // Get user's precise coordinates
     const position = await getCurrentLocation();
+    const { latitude, longitude } = position.coords;
     
     console.log("Got user location with high precision:", {
-      latitude: position.coords.latitude,
-      longitude: position.coords.longitude,
+      latitude,
+      longitude,
       accuracy: `${position.coords.accuracy} meters`,
       timestamp: new Date(position.timestamp).toISOString()
     });
     
-    return await getWeatherByCoords(
-      position.coords.latitude, 
-      position.coords.longitude
-    );
+    // Try to get precise location name using reverse geocoding
+    try {
+      const geocodingResults = await getReverseGeocoding(latitude, longitude);
+      
+      if (geocodingResults && geocodingResults.length > 0) {
+        const locationInfo = geocodingResults[0];
+        console.log("Reverse geocoding result:", locationInfo);
+        
+        // Get weather data using coordinates
+        const weatherData = await getWeatherByCoords(latitude, longitude);
+        
+        // Override the location name with more precise data if available
+        if (locationInfo.name) {
+          weatherData.name = locationInfo.name;
+          
+          // Include state/region in name for better identification
+          if (locationInfo.state) {
+            weatherData.name = `${locationInfo.name}, ${locationInfo.state}`;
+          }
+          
+          if (locationInfo.country) {
+            weatherData.sys.country = locationInfo.country;
+          }
+        }
+        
+        return weatherData;
+      }
+    } catch (geoError) {
+      console.error("Reverse geocoding failed:", geoError);
+      // Continue with coordinate-based weather if geocoding fails
+    }
+    
+    // Fallback to coordinate-based weather without location name enhancement
+    return await getWeatherByCoords(latitude, longitude);
   } catch (error) {
     console.error("Failed to get weather by current location:", error);
     throw error;
