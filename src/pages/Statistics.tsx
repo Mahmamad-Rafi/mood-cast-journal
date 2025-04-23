@@ -2,11 +2,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAllEntries } from "@/utils/storage";
 import { MOODS, MoodType } from "@/types/mood";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 const Statistics = () => {
   const navigate = useNavigate();
@@ -18,11 +19,13 @@ const Statistics = () => {
     return acc;
   }, {} as Record<string, number>);
 
-  const pieChartData = Object.entries(moodCounts).map(([mood, count]) => ({
-    name: MOODS[mood as MoodType].label,
-    value: count,
-    color: MOODS[mood as MoodType].color,
-  }));
+  const pieChartData = Object.entries(moodCounts)
+    .map(([mood, count]) => ({
+      name: MOODS[mood as MoodType].label,
+      value: count,
+      color: MOODS[mood as MoodType].color,
+    }))
+    .filter(item => item.value > 0); // Only show moods that have entries
 
   // Get daily mood trends for current month
   const currentDate = new Date();
@@ -46,6 +49,30 @@ const Statistics = () => {
     };
   });
 
+  // Create a custom pie chart label renderer that prevents overlapping
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }: any) => {
+    // Skip labels for very small slices (less than 5%)
+    if (percent < 0.05) return null;
+    
+    const RADIAN = Math.PI / 180;
+    const radius = outerRadius * 1.2; // Position label outside the pie
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill={pieChartData[index].color}
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        fontSize="12"
+      >
+        {`${name} ${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -59,26 +86,32 @@ const Statistics = () => {
             <CardTitle>Monthly Mood Distribution</CardTitle>
           </CardHeader>
           <CardContent className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieChartData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={150}
-                  label={({ name, percent }) => 
-                    `${name} ${(percent * 100).toFixed(0)}%`
-                  }
-                >
-                  {pieChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {pieChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieChartData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={120}
+                    labelLine={true}
+                    label={renderCustomizedLabel}
+                  >
+                    {pieChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+                  <Tooltip formatter={(value, name) => [`${value} entries`, name]} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">No mood entries yet</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

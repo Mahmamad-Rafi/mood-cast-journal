@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { WeatherData, getWeatherByCurrentLocation, getWeatherByCity } from '@/utils/weatherService';
+import { toast } from "sonner";
 
 export function useWeather({ city = "current" }: { city?: string } = {}) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -23,7 +24,12 @@ export function useWeather({ city = "current" }: { city?: string } = {}) {
         
         setWeather(weatherData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch weather data');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch weather data';
+        setError(errorMessage);
+        
+        if (errorMessage.includes('Geolocation permission denied')) {
+          toast.error("Please enable location access to get current weather");
+        }
       } finally {
         setLoading(false);
       }

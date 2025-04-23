@@ -83,7 +83,22 @@ export const getCurrentLocation = (): Promise<GeolocationPosition> => {
       return;
     }
     
-    navigator.geolocation.getCurrentPosition(resolve, reject);
+    navigator.geolocation.getCurrentPosition(
+      resolve,
+      (error) => {
+        console.error("Geolocation error:", error);
+        
+        // Convert GeolocationPositionError to more user-friendly messages
+        if (error.code === 1) {
+          reject(new Error("Geolocation permission denied"));
+        } else if (error.code === 2) {
+          reject(new Error("Unable to determine your location"));
+        } else {
+          reject(new Error("Geolocation timed out"));
+        }
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
   });
 };
 
