@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin, Navigation } from "lucide-react";
 
 const CITIES = [
-  { value: "current", label: "My Live Location", icon: Navigation },
+  { value: "current", label: "My Live Location (Most Accurate)", icon: Navigation },
   { value: "hyderabad", label: "Hyderabad" },
   { value: "chennai", label: "Chennai" },
   { value: "kolkata", label: "Kolkata" },
@@ -24,9 +24,9 @@ interface LocationSelectProps {
 const LocationSelect = ({ value, onValueChange }: LocationSelectProps) => {
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className="w-[200px]">
+      <SelectTrigger className="w-[240px]">
         <div className="flex items-center gap-2">
-          {value === "current" ? <Navigation className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
+          {value === "current" ? <Navigation className="h-4 w-4 text-blue-500" /> : <MapPin className="h-4 w-4" />}
           <SelectValue placeholder="Select location" />
         </div>
       </SelectTrigger>

@@ -58,9 +58,9 @@ export const getWeatherByCoords = async (
   lon: number
 ): Promise<WeatherData> => {
   try {
-    // Using more precise location data with higher accuracy
+    // Using max precision settings for more accurate location-based weather
     const response = await fetch(
-      `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
+      `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&cnt=1`
     );
     
     if (!response.ok) {
@@ -84,7 +84,7 @@ export const getCurrentLocation = (): Promise<GeolocationPosition> => {
       return;
     }
     
-    // Requesting high accuracy and reducing cache time for more accurate results
+    // Request highest possible accuracy with no cached data
     navigator.geolocation.getCurrentPosition(
       resolve,
       (error) => {
@@ -100,9 +100,9 @@ export const getCurrentLocation = (): Promise<GeolocationPosition> => {
         }
       },
       { 
-        timeout: 10000, 
-        enableHighAccuracy: true,
-        maximumAge: 0 // Don't use cached position data
+        timeout: 15000,  // Increased timeout for better accuracy
+        enableHighAccuracy: true,  // Request high accuracy
+        maximumAge: 0  // Don't use cached position data
       }
     );
   });
@@ -122,10 +122,11 @@ export const getWeatherByCurrentLocation = async (): Promise<WeatherData> => {
   try {
     const position = await getCurrentLocation();
     
-    console.log("Got user location:", {
+    console.log("Got user location with high precision:", {
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
-      accuracy: position.coords.accuracy
+      accuracy: `${position.coords.accuracy} meters`,
+      timestamp: new Date(position.timestamp).toISOString()
     });
     
     return await getWeatherByCoords(

@@ -17,7 +17,8 @@ export function useWeather({ city = "current" }: { city?: string } = {}) {
         let weatherData: WeatherData;
         
         if (city === "current") {
-          console.log("Fetching weather for current location");
+          console.log("Fetching weather for current precise location");
+          toast.info("Accessing your live location...");
           weatherData = await getWeatherByCurrentLocation();
           console.log("Current location weather data:", weatherData);
         } else {
@@ -37,11 +38,13 @@ export function useWeather({ city = "current" }: { city?: string } = {}) {
         setError(errorMessage);
         
         if (errorMessage.includes('Geolocation permission denied')) {
-          toast.error("Please enable location access in your browser to get current weather");
+          toast.error("Please enable location access in your browser settings to get accurate live weather");
         } else if (errorMessage.includes('Unable to determine')) {
-          toast.error("Could not determine your location. Try selecting a city instead.");
+          toast.error("Could not determine your exact location. Try selecting a specific city instead.");
+        } else if (errorMessage.includes('Geolocation timed out')) {
+          toast.error("Location detection timed out. Please try again or select a specific city.");
         } else {
-          toast.error("Could not load weather data. Please try again later.");
+          toast.error("Could not load weather data for your location. Please try again later.");
         }
       } finally {
         setLoading(false);
