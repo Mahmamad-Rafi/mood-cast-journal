@@ -1,16 +1,21 @@
+
 /**
  * Weather Service - Handles all weather API interactions
  */
+import { 
+  GeocodingResult, 
+  getCurrentLocation, 
+  getReverseGeocoding,
+  findBestLocation
+} from "./locationService";
 
 // API key for OpenWeatherMap
 const API_KEY = "02e2cec63096e9aac69ce909ca8fe7a7";
 const BASE_URL = "https://api.openweathermap.org/data/2.5";
-const GEO_URL = "https://api.openweathermap.org/geo/1.0";
 
-// Adding Google's reverse geocoding API for more accurate location detection
-const GOOGLE_GEOCODE_API = "https://maps.googleapis.com/maps/api/geocode/json";
-const GOOGLE_API_KEY = ""; // We'll use OpenWeatherMap's geocoding instead
-
+/**
+ * Weather data structure
+ */
 export interface WeatherData {
   main: {
     temp: number;
@@ -32,15 +37,6 @@ export interface WeatherData {
     country: string;
   };
   dt: number;
-}
-
-export interface GeocodingResult {
-  name: string;
-  local_names?: Record<string, string>;
-  lat: number;
-  lon: number;
-  country: string;
-  state?: string;
 }
 
 /**
@@ -71,7 +67,6 @@ export const getWeatherByCoords = async (
   lon: number
 ): Promise<WeatherData> => {
   try {
-    // Using max precision settings for more accurate location-based weather
     const response = await fetch(
       `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&cnt=1`
     );
@@ -88,95 +83,10 @@ export const getWeatherByCoords = async (
 };
 
 /**
- * Reverse geocoding to get precise location name from coordinates
- * We're using OpenWeatherMap's geocoding API as it's free and already set up
- */
-export const getReverseGeocoding = async (
-  lat: number, 
-  lon: number
-): Promise<GeocodingResult[]> => {
-  try {
-    console.log(`Performing reverse geocoding with coordinates: ${lat}, ${lon}`);
-    const response = await fetch(
-      `${GEO_URL}/reverse?lat=${lat}&lon=${lon}&limit=5&appid=${API_KEY}`
-    );
-    
-    if (!response.ok) {
-      throw new Error(`Geocoding API error: ${response.statusText}`);
-    }
-    
-    const results = await response.json();
-    console.log("Reverse geocoding results:", results);
-    return results;
-  } catch (error) {
-    console.error("Failed to reverse geocode location:", error);
-    throw error;
-  }
-};
-
-/**
- * Get user's current location using browser geolocation API
- * with maximum accuracy settings and a very long timeout
- */
-export const getCurrentLocation = (): Promise<GeolocationPosition> => {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("Geolocation is not supported by your browser"));
-      return;
-    }
-    
-    // Clear any cached positions first
-    navigator.geolocation.clearWatch(navigator.geolocation.watchPosition(() => {}));
-    
-    // Request highest possible accuracy with absolutely no cached data
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        console.log("Raw geolocation position received:", position);
-        console.log(`Coordinates: ${position.coords.latitude}, ${position.coords.longitude}`);
-        console.log(`Accuracy: ${position.coords.accuracy} meters`);
-        resolve(position);
-      },
-      (error) => {
-        console.error("Geolocation error:", error);
-        
-        // Convert GeolocationPositionError to more user-friendly messages
-        if (error.code === 1) {
-          reject(new Error("Geolocation permission denied"));
-        } else if (error.code === 2) {
-          reject(new Error("Unable to determine your location"));
-        } else {
-          reject(new Error("Geolocation timed out"));
-        }
-      },
-      { 
-        timeout: 60000,          // Extended timeout (60 seconds) for better accuracy
-        enableHighAccuracy: true, // Request high accuracy
-        maximumAge: 0            // Don't use cached position data
-      }
-    );
-  });
-};
-
-/**
  * Get weather icon URL from icon code
  */
 export const getWeatherIconUrl = (iconCode: string): string => {
   return `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
-};
-
-/**
- * Find the most specific location from geocoding results
- * Prioritizes smaller localities over larger regions
- */
-const findBestLocation = (results: GeocodingResult[]): GeocodingResult | null => {
-  if (!results || results.length === 0) return null;
-  
-  // Try to find locations with more specific information (having state property)
-  const specificLocations = results.filter(loc => !!loc.state);
-  if (specificLocations.length > 0) return specificLocations[0];
-  
-  // Otherwise return the first result
-  return results[0];
 };
 
 /**
