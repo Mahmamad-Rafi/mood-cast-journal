@@ -1,9 +1,9 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin } from "lucide-react";
+import { MapPin, Navigation } from "lucide-react";
 
 const CITIES = [
-  { value: "current", label: "Current Location" },
+  { value: "current", label: "My Live Location", icon: Navigation },
   { value: "hyderabad", label: "Hyderabad" },
   { value: "chennai", label: "Chennai" },
   { value: "kolkata", label: "Kolkata" },
@@ -26,14 +26,21 @@ const LocationSelect = ({ value, onValueChange }: LocationSelectProps) => {
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className="w-[200px]">
         <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4" />
+          {value === "current" ? <Navigation className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
           <SelectValue placeholder="Select location" />
         </div>
       </SelectTrigger>
       <SelectContent>
         {CITIES.map((city) => (
-          <SelectItem key={city.value} value={city.value}>
-            {city.label}
+          <SelectItem key={city.value} value={city.value} className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              {city.value === "current" ? (
+                <Navigation className="h-4 w-4 text-blue-500" />
+              ) : (
+                <MapPin className="h-4 w-4" />
+              )}
+              {city.label}
+            </div>
           </SelectItem>
         ))}
       </SelectContent>

@@ -58,6 +58,7 @@ export const getWeatherByCoords = async (
   lon: number
 ): Promise<WeatherData> => {
   try {
+    // Using more precise location data with higher accuracy
     const response = await fetch(
       `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
     );
@@ -83,6 +84,7 @@ export const getCurrentLocation = (): Promise<GeolocationPosition> => {
       return;
     }
     
+    // Requesting high accuracy and reducing cache time for more accurate results
     navigator.geolocation.getCurrentPosition(
       resolve,
       (error) => {
@@ -97,7 +99,11 @@ export const getCurrentLocation = (): Promise<GeolocationPosition> => {
           reject(new Error("Geolocation timed out"));
         }
       },
-      { timeout: 10000, enableHighAccuracy: true }
+      { 
+        timeout: 10000, 
+        enableHighAccuracy: true,
+        maximumAge: 0 // Don't use cached position data
+      }
     );
   });
 };
@@ -115,6 +121,13 @@ export const getWeatherIconUrl = (iconCode: string): string => {
 export const getWeatherByCurrentLocation = async (): Promise<WeatherData> => {
   try {
     const position = await getCurrentLocation();
+    
+    console.log("Got user location:", {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+      accuracy: position.coords.accuracy
+    });
+    
     return await getWeatherByCoords(
       position.coords.latitude, 
       position.coords.longitude
