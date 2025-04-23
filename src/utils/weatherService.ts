@@ -1,4 +1,3 @@
-
 /**
  * Weather Service - Handles all weather API interactions
  */
@@ -7,6 +6,10 @@
 const API_KEY = "02e2cec63096e9aac69ce909ca8fe7a7";
 const BASE_URL = "https://api.openweathermap.org/data/2.5";
 const GEO_URL = "https://api.openweathermap.org/geo/1.0";
+
+// Adding Google's reverse geocoding API for more accurate location detection
+const GOOGLE_GEOCODE_API = "https://maps.googleapis.com/maps/api/geocode/json";
+const GOOGLE_API_KEY = ""; // We'll use OpenWeatherMap's geocoding instead
 
 export interface WeatherData {
   main: {
@@ -86,21 +89,25 @@ export const getWeatherByCoords = async (
 
 /**
  * Reverse geocoding to get precise location name from coordinates
+ * We're using OpenWeatherMap's geocoding API as it's free and already set up
  */
 export const getReverseGeocoding = async (
   lat: number, 
   lon: number
 ): Promise<GeocodingResult[]> => {
   try {
+    console.log(`Performing reverse geocoding with coordinates: ${lat}, ${lon}`);
     const response = await fetch(
-      `${GEO_URL}/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`
+      `${GEO_URL}/reverse?lat=${lat}&lon=${lon}&limit=5&appid=${API_KEY}`
     );
     
     if (!response.ok) {
       throw new Error(`Geocoding API error: ${response.statusText}`);
     }
     
-    return await response.json();
+    const results = await response.json();
+    console.log("Reverse geocoding results:", results);
+    return results;
   } catch (error) {
     console.error("Failed to reverse geocode location:", error);
     throw error;
@@ -109,7 +116,7 @@ export const getReverseGeocoding = async (
 
 /**
  * Get user's current location using browser geolocation API
- * with maximum accuracy settings
+ * with maximum accuracy settings and a very long timeout
  */
 export const getCurrentLocation = (): Promise<GeolocationPosition> => {
   return new Promise((resolve, reject) => {
@@ -118,9 +125,17 @@ export const getCurrentLocation = (): Promise<GeolocationPosition> => {
       return;
     }
     
-    // Request highest possible accuracy with no cached data
+    // Clear any cached positions first
+    navigator.geolocation.clearWatch(navigator.geolocation.watchPosition(() => {}));
+    
+    // Request highest possible accuracy with absolutely no cached data
     navigator.geolocation.getCurrentPosition(
-      resolve,
+      (position) => {
+        console.log("Raw geolocation position received:", position);
+        console.log(`Coordinates: ${position.coords.latitude}, ${position.coords.longitude}`);
+        console.log(`Accuracy: ${position.coords.accuracy} meters`);
+        resolve(position);
+      },
       (error) => {
         console.error("Geolocation error:", error);
         
@@ -134,9 +149,9 @@ export const getCurrentLocation = (): Promise<GeolocationPosition> => {
         }
       },
       { 
-        timeout: 30000,       // Extended timeout for better accuracy
-        enableHighAccuracy: true,  // Request high accuracy
-        maximumAge: 0         // Don't use cached position data
+        timeout: 60000,          // Extended timeout (60 seconds) for better accuracy
+        enableHighAccuracy: true, // Request high accuracy
+        maximumAge: 0            // Don't use cached position data
       }
     );
   });
@@ -147,6 +162,21 @@ export const getCurrentLocation = (): Promise<GeolocationPosition> => {
  */
 export const getWeatherIconUrl = (iconCode: string): string => {
   return `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+};
+
+/**
+ * Find the most specific location from geocoding results
+ * Prioritizes smaller localities over larger regions
+ */
+const findBestLocation = (results: GeocodingResult[]): GeocodingResult | null => {
+  if (!results || results.length === 0) return null;
+  
+  // Try to find locations with more specific information (having state property)
+  const specificLocations = results.filter(loc => !!loc.state);
+  if (specificLocations.length > 0) return specificLocations[0];
+  
+  // Otherwise return the first result
+  return results[0];
 };
 
 /**
@@ -165,40 +195,44 @@ export const getWeatherByCurrentLocation = async (): Promise<WeatherData> => {
       timestamp: new Date(position.timestamp).toISOString()
     });
     
+    // First get basic weather data
+    const weatherData = await getWeatherByCoords(latitude, longitude);
+    
     // Try to get precise location name using reverse geocoding
     try {
       const geocodingResults = await getReverseGeocoding(latitude, longitude);
       
       if (geocodingResults && geocodingResults.length > 0) {
-        const locationInfo = geocodingResults[0];
-        console.log("Reverse geocoding result:", locationInfo);
+        // Find the best location from results
+        const bestLocation = findBestLocation(geocodingResults);
+        console.log("Best location found:", bestLocation);
         
-        // Get weather data using coordinates
-        const weatherData = await getWeatherByCoords(latitude, longitude);
-        
-        // Override the location name with more precise data if available
-        if (locationInfo.name) {
-          weatherData.name = locationInfo.name;
-          
-          // Include state/region in name for better identification
-          if (locationInfo.state) {
-            weatherData.name = `${locationInfo.name}, ${locationInfo.state}`;
-          }
-          
-          if (locationInfo.country) {
-            weatherData.sys.country = locationInfo.country;
+        if (bestLocation) {
+          // Override the location name with more precise data
+          if (bestLocation.name) {
+            let locationName = bestLocation.name;
+            
+            // Include state/region for better identification
+            if (bestLocation.state) {
+              locationName = `${locationName}, ${bestLocation.state}`;
+            }
+            
+            console.log(`Updating location from "${weatherData.name}" to "${locationName}"`);
+            weatherData.name = locationName;
+            
+            if (bestLocation.country) {
+              weatherData.sys.country = bestLocation.country;
+            }
           }
         }
-        
-        return weatherData;
       }
     } catch (geoError) {
       console.error("Reverse geocoding failed:", geoError);
       // Continue with coordinate-based weather if geocoding fails
     }
     
-    // Fallback to coordinate-based weather without location name enhancement
-    return await getWeatherByCoords(latitude, longitude);
+    console.log("Final weather data with location:", weatherData);
+    return weatherData;
   } catch (error) {
     console.error("Failed to get weather by current location:", error);
     throw error;

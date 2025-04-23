@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin, Navigation } from "lucide-react";
 
 const CITIES = [
-  { value: "current", label: "My Precise Live Location", icon: Navigation },
+  { value: "current", label: "My Exact Live Location (GPS)", icon: Navigation },
   { value: "hyderabad", label: "Hyderabad" },
   { value: "chennai", label: "Chennai" },
   { value: "kolkata", label: "Kolkata" },

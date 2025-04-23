@@ -18,9 +18,10 @@ export function useWeather({ city = "current" }: { city?: string } = {}) {
         
         if (city === "current") {
           console.log("Fetching weather for precise live location");
-          toast.info("Accessing your live location for precise weather data...");
+          toast.loading("Accessing your live location...");
           weatherData = await getWeatherByCurrentLocation();
           console.log("Current location weather data:", weatherData);
+          toast.dismiss();
         } else {
           console.log(`Fetching weather for city: ${city}`);
           weatherData = await getWeatherByCity(city);
